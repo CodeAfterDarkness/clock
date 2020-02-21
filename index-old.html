@@ -1,0 +1,315 @@
+<!doctype html>
+<html>
+<head>
+<title>Test</title>
+<script type="text/javascript" src="tween.js"></script>
+<script type="text/javascript">
+
+app = {};
+app.objects = [];
+	
+var canvas;
+var ctx;
+
+var square = function(initObj){
+	var self = this;
+	self.vtx = [
+		[150,150],
+		[150,450],
+		[250,450],
+		[250,375],
+		[300,375],
+		[300,450],
+		[450,450],
+		[450,150],
+		[300,100],	
+	];
+	
+	this.draw = function(){
+		self = this;
+		
+		
+		
+		ctx.beginPath();
+		ctx.strokeStyle = 'rgba(255,0,0,50)';
+			
+		for(var i = 0; i < self.vtx.length; i++){
+			if(i === 0){
+				ctx.moveTo(self.vtx[i][0],self.vtx[i][1]);
+			} else {
+				ctx.lineTo(self.vtx[i][0],self.vtx[i][1]);
+			}
+		}
+		ctx.fill()			
+	}
+};
+
+app = {};
+app.objects = [];
+
+
+objClass = function(o){
+	var self = this;
+	
+	self.x = o.x;
+	self.y = o.y;
+	self.w = o.w;
+	self.h = o.h;
+	self.fillStyle = o.fillStyle;
+	
+	self.getX = function(){
+		if(typeof self.tweenX === 'undefined'){
+			return self.x;
+		} else {
+			return self.tweenX.getValue();
+		}
+	}
+	
+	self.getY = function(){
+		if(typeof self.tweenY === 'undefined'){
+			return self.y;
+		} else {
+			return self.tweenY.getValue();
+		}
+	}
+	
+	self.getH = function(){
+		if(typeof self.tweenH === 'undefined'){
+			return self.h;
+		} else {
+			return self.tweenH.getValue();
+		}
+	}
+	
+	self.getW = function(){
+		if(typeof self.tweenW === 'undefined'){
+			return self.w;
+		} else {
+			return self.tweenW.getValue();
+		}
+	}
+	
+	self.draw = function(){
+		ctx.fillStyle = self.fillStyle;
+		ctx.fillRect(self.getX(), self.getY(), self.getH(), self.getW());
+		ctx.closePath();
+	}
+	
+	
+	return self;
+}
+
+
+
+
+function drawSlice(o){
+	var self = this;
+	
+	
+	// Magnitude
+	// Index
+	// Center X
+	// Center Y
+	
+	// Arguments
+	// Slice Height
+	// Distance from center for A
+	// Degrees width of slice
+	// Index of slice
+	
+	// Slice is 360 degrees / number of slices possible
+	// Hours = 12 = 30 degree width
+	// Minutes = 60 = 6 degree width
+	// Seconds = 60 = 6 degree width
+	
+	// Index position
+	// Offset of point B
+	// Offset of point D
+	
+	// Clock is 400px tall
+	
+	// Given a distance from center, distance from C to A, calculate 4 XY vertexes
+	// Offset from 0 degrees by index * slice size
+	self.lineWidth = 4;
+	self.h = o.height;
+	self.w = 360 / o.slices; // degrees calculate by magnitude (Hours is 360/12, etc)
+	self.centerOffset = o.magnitude * (self.h + self.lineWidth * 2); // pixels calculated by magnitude * 50 (Hours is 1 * 50, Minutes 2*50, Seconds 3 * 50) 
+	self.index; // multiply by w to get position around clock
+	self.rotaryIndex = o.index * self.w;
+	
+	ctx.fillStyle = bsgColor;
+	ctx.strokeStyle = "#000000";
+	
+	if(o.index === o.length){
+  	ctx.fillStyle = "#8A470D";
+  	//ctx.fillStyle = "#FFFFFF";
+	}
+	
+	ctx.lineWidth = self.lineWidth;
+	ctx.beginPath();
+	ctx.arc(o.x, o.y, self.centerOffset -+(lineWidth*2), (Math.PI * 2) * ((self.w * o.index - 90)/360), (Math.PI * 2) * (((self.w * o.index - 90) + self.w)/360));
+	ctx.arc(o.x, o.y, self.centerOffset - (self.h + lineWidth*2), (Math.PI * 2) * (((self.w * o.index - 90) + self.w)/360), (Math.PI * 2) * ((self.w * o.index - 90)/360), true);
+	ctx.closePath();		
+	ctx.fill();
+	ctx.stroke(); 
+	
+}
+	
+app.init = function(){
+	//alert("test");
+	
+	canvas = document.getElementById("canvas1");
+	canvas.width = document.documentElement.clientWidth;
+	canvas.height = document.documentElement.clientHeight;
+	ctx = canvas.getContext("2d");
+	
+	//app.objects.push(new square());
+	
+	//ctx.fillRect(150,150,300,300);
+	/*
+	obj = new objClass({x: 10, y: 15, h: 40, w: 40, fillStyle: "rgba(55,55,55,1)"});
+	app.objects.push(obj);
+	*/
+	
+	//app.objects[1].tweenX = new Tween(app.objects[1].x, 400, 5000, 'quadInOut', 'loop');
+	//app.objects[1].tweenY = new Tween(app.objects[1].y, 400, 5000, 'linear', 'loop');
+	
+	
+	window.requestAnimationFrame(tick);
+
+}
+
+app.lastSecond = -1;
+
+bsgColor = "#E47714";
+
+function clock(){
+  
+
+	// Function that populates app.objects with squares based on current time
+	// First row = seconds
+	// Second row = minutes
+	// Third row = hours
+	// Fourth row = PM indicator
+	app.clock = [];
+
+	t = new Date(Date.now());
+	hours = t.getHours();
+	minutes = t.getMinutes();
+	seconds = t.getSeconds();
+	app.lastSecond = seconds;
+	
+	pmIndicator = false;
+	if(hours > 12){
+		pmIndicator = true;
+	}
+	
+	if(hours > 12){
+		hours = hours - 12;
+	}
+	
+	for(var i = 0; i < hours; i++){
+		//newObj = new objClass({x: 500 + (i * 10), y: 20, h: 5, w: 5, fillStyle: "rgba(100,100,100,1)"});
+		//app.clock.push(newObj);
+		drawSlice({x: canvas.width/2, y: canvas.height/2, magnitude: 2, slices: 12, index: i, height: 50, length: hours});
+	}
+	
+	for(var i = 0; i <= minutes; i++){
+		//newObj = new objClass({x: 500 + (i * 10), y: 30, h: 5, w: 5, fillStyle: "rgba(100,100,100,1)"});
+		//app.clock.push(newObj);
+		drawSlice({x: canvas.width/2, y: canvas.height/2, magnitude: 3, slices: 60, index: i, height: 47, length: minutes});
+	}
+	
+	for(var i = 0; i <= seconds; i++){
+		//newObj = new objClass({x: 500 + (i * 10), y: 40, h: 5, w: 5, fillStyle: "rgba(100,100,100,1)"});
+		//app.clock.push(newObj);
+		drawSlice({x: canvas.width/2, y: canvas.height/2, magnitude: 4, slices: 60, index: i, height: 45, length: seconds});
+	}
+	if(pmIndicator){
+		//newObj = new objClass({x: 500, y: 50, h: 20, w: 20, fillStyle: "rgba(100,100,100,1)"});
+		//app.clock.push(newObj);
+		
+		
+		ctx.fillStyle = bsgColor;
+		ctx.beginPath();
+		ctx.arc(canvas.width/2, canvas.height/2, 54, 0, (Math.PI * 2));
+		ctx.closePath();
+		ctx.fill();
+		
+	} else {
+		newObj = new objClass({x: 500, y: 50, h: 20, w: 20, fillStyle: "rgba(100,100,100,1)"});
+		app.clock.push(newObj);
+		newObj = new objClass({x: 505, y: 55, h: 10, w: 10, fillStyle: "rgba(255,255,0,1)"});
+		app.clock.push(newObj);
+		
+		ctx.fillStyle = bsgColor;
+		ctx.beginPath();
+		ctx.arc(canvas.width/2, canvas.height/2, 50, 0, (Math.PI * 2));
+		ctx.closePath();
+		ctx.fill();
+		ctx.beginPath();
+		ctx.fillStyle = "#FFFF00";
+		ctx.arc(canvas.width/2, canvas.height/2, 40, 0, (Math.PI * 2));
+		ctx.fill();
+		ctx.closePath();
+	}
+	
+	ctx.strokeStyle = bsgColor;
+	ctx.beginPath();
+	ctx.lineWidth = 5;
+	ctx.arc(canvas.width/2, canvas.height/2, 210, 0, (Math.PI * 2));
+	ctx.closePath();
+	ctx.stroke();
+	
+}
+
+
+
+
+
+app.draw = function(){
+	
+	
+	t = new Date(Date.now());
+	seconds = t.getSeconds();
+	if(app.lastSecond === seconds){
+  	return;
+  }
+  
+  
+	ctx.fillStyle = 'rgb(0,0,0)';
+	ctx.clearRect(0,0,canvas.width,canvas.height);	
+	ctx.fillRect(0,0,canvas.width,canvas.height);
+	
+	clock();
+	
+	for(var i = 0; i < app.clock.length; i++){
+		app.clock[i].draw();
+	}
+	for(var i = 0; i < app.objects.length; i++){
+		app.objects[i].draw();
+	}
+}
+
+function tick(){
+	app.draw();
+	window.requestAnimationFrame(tick);
+}
+
+
+</script>
+<style>
+body {margin: 0px; overflow: hidden;}
+body,html {height:100%; width:100%;}
+#canvas1 {	}
+</style>
+</head>
+<body>
+<canvas id='canvas1'></canvas>
+<script type="text/javascript">
+app.init();
+</script>
+</body>
+</html>
+
+
